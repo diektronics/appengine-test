@@ -15,3 +15,9 @@ indexes:
   properties:
   - name: Date
     direction: desc
+
+- kind: __GsFileInfo__
+  properties:
+  - name: filename
+  - name: creation
+    direction: desc
