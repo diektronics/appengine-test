@@ -49,22 +49,6 @@ func root(w http.ResponseWriter, r *http.Request) {
 	if err := guestbookTemplate.Execute(w, greetings); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	// u := user.Current(c)
-	// if u == nil {
-	// 	fmt.Fprint(w, "This shouldn't be happening...")
-	// 	return
-	// }
-
-	// if strings.HasSuffix(u.Email, "@google.com") {
-	// 	fmt.Fprint(w, guestbookForm)
-	// } else {
-	// 	fmt.Fprint(w, "The hell are you???")
-	// }
-
-	// url, _ := user.LogoutURL(c, "/")
-	// fmt.Fprintf(w, `(<a href="%s">sign out</a>)`, url)
-
 }
 
 var guestbookTemplate = template.Must(template.New("book").Parse(guestbookTemplateHTML))
@@ -92,6 +76,7 @@ var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))
 
 const rootTemplateHTML = `
 <html><body>
+<h4>{{.Id}}</h4>
 {{with .Files}}
 <h1>Your files</h1>
 {{range .}}
@@ -108,15 +93,15 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	u := user.Current(c)
 
-	uploadURL, err := blobstore.UploadURL(c, "/upload", &blobstore.UploadURLOptions{StorageBucket: fmt.Sprintf("diektronics/%v", u.ID)})
+	uploadURL, err := blobstore.UploadURL(c, "/upload", &blobstore.UploadURLOptions{StorageBucket: fmt.Sprintf("diektronics.appspot.com/%v", u.ID)})
 	if err != nil {
 		serveError(c, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html")
 	q := datastore.NewQuery("__GsFileInfo__").KeysOnly().
-		Filter("filename >", fmt.Sprintf("/diektronics/%v/", u.ID)).
-		Filter("filename <", fmt.Sprintf("/diektronics/%v0/", u.ID)).
+		Filter("filename >", fmt.Sprintf("/diektronics.appspot.com/%v/", u.ID)).
+		Filter("filename <", fmt.Sprintf("/diektronics.appspot.com/%v0/", u.ID)).
 		Order("filename")
 	it := q.Run(c)
 	files := [][]string{}
@@ -140,7 +125,8 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		UploadUrl *url.URL
 		Files     [][]string
-	}{uploadURL, files}
+		Id        string
+	}{uploadURL, files, u.ID}
 	err = rootTemplate.Execute(w, data)
 	if err != nil {
 		c.Errorf("%v", err)
@@ -149,6 +135,7 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 
 func handleUpload(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
+	c.Errorf("made it into the upload handler")
 	blobs, _, err := blobstore.ParseUpload(r)
 	if err != nil {
 		serveError(c, w, err)
