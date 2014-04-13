@@ -108,15 +108,15 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	u := user.Current(c)
 
-	uploadURL, err := blobstore.UploadURL(c, "/upload", &blobstore.UploadURLOptions{StorageBucket: fmt.Sprintf("my_bucket/%v", u.ID)})
+	uploadURL, err := blobstore.UploadURL(c, "/upload", &blobstore.UploadURLOptions{StorageBucket: fmt.Sprintf("diektronics/%v", u.ID)})
 	if err != nil {
 		serveError(c, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html")
 	q := datastore.NewQuery("__GsFileInfo__").KeysOnly().
-		Filter("filename >", fmt.Sprintf("/my_bucket/%v/", u.ID)).
-		Filter("filename <", fmt.Sprintf("/my_bucket/%v0/", u.ID)).
+		Filter("filename >", fmt.Sprintf("/diektronics/%v/", u.ID)).
+		Filter("filename <", fmt.Sprintf("/diektronics/%v0/", u.ID)).
 		Order("filename")
 	it := q.Run(c)
 	files := [][]string{}
